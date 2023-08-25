@@ -1,257 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-<meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
 
-    <meta name="author" content="John Doe">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
 
 
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.18.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="AlphaStar 浅析介绍本文从alphastar项目学习以下内容：  多源数据的融合 如何构建一个复杂muilti-head的神经网络 如何处理autogressive的问题  本文参考：周博磊老师《强化学习纲要》中对AlphaStar的讲解，以及DeepMind的论文《AlphaStar: Mastering the Real-Time Strategy Game StarCraft II">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AlphaStar 浅析">
+<meta property="og:url" content="http://example.com/2023/08/24/AlphaStar/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="AlphaStar 浅析介绍本文从alphastar项目学习以下内容：  多源数据的融合 如何构建一个复杂muilti-head的神经网络 如何处理autogressive的问题  本文参考：周博磊老师《强化学习纲要》中对AlphaStar的讲解，以及DeepMind的论文《AlphaStar: Mastering the Real-Time Strategy Game StarCraft II">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/image/cover.png">
+<meta property="og:image" content="http://example.com/image/action.png">
+<meta property="og:image" content="http://example.com/image/input.png">
+<meta property="og:image" content="http://example.com/image/core.png">
+<meta property="og:image" content="http://example.com/image/output.png">
+<meta property="og:image" content="http://example.com/image/Z.png">
+<meta property="og:image" content="http://example.com/image/ED.png">
+<meta property="og:image" content="http://example.com/image/PFSP.png">
+<meta property="og:image" content="http://example.com/image/f.png">
+<meta property="article:published_time" content="2023-08-24T02:48:58.741Z">
+<meta property="article:modified_time" content="2023-08-25T05:13:31.847Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/image/cover.png">
 
 
+<link rel="canonical" href="http://example.com/2023/08/24/AlphaStar/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2023/08/24/AlphaStar/","path":"2023/08/24/AlphaStar/","title":"AlphaStar 浅析"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
 <title>AlphaStar 浅析 | Hexo</title>
+  
 
 
 
-    <link rel="icon" href="/favicon.ico">
 
 
 
 
-    <!-- stylesheets list from _config.yml -->
-    
-    <link rel="stylesheet" href="/css/style.css">
-    
 
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
 
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
 
-    <!-- scripts list from _config.yml -->
-    
-    <script src="/js/script.js"></script>
-    
-    <script src="/js/tocbot.min.js"></script>
-    
-
-
-
-    
-    
-        <!-- MathJax配置，可通过单美元符号书写行内公式等 -->
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-    "HTML-CSS": {
-        preferredFont: "TeX",
-        availableFonts: ["STIX","TeX"],
-        linebreaks: { automatic:true },
-        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
-    },
-    tex2jax: {
-        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
-        processEscapes: true,
-        ignoreClass: "tex2jax_ignore|dno",
-        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-    },
-    TeX: {
-        equationNumbers: { autoNumber: "AMS" },
-        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
-        Macros: { href: "{}" }
-    },
-    messageStyle: "none"
-    });
-</script>
-<!-- 给MathJax元素添加has-jax class -->
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i=0; i < all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-</script>
-<!-- 通过连接CDN加载MathJax的js代码 -->
-<script type="text/javascript" async
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
-</script>
-
-
-    
-
-
-<meta name="generator" content="Hexo 6.3.0"></head>
-
-<body>
-    <script>
-        // this function is used to check current theme before page loaded.
-        (() => {
-            const currentTheme = window.localStorage && window.localStorage.getItem('theme') || '';
-            const isDark = currentTheme === 'dark';
-            const pagebody = document.getElementsByTagName('body')[0]
-            if (isDark) {
-                pagebody.classList.add('dark-theme');
-                // mobile
-                document.getElementById("mobile-toggle-theme").innerText = "· Dark"
-            } else {
-                pagebody.classList.remove('dark-theme');
-                // mobile
-                document.getElementById("mobile-toggle-theme").innerText = "· Light"
-            }
-        })();
-    </script>
-
-    <div class="wrapper">
-        <header>
-    <nav class="navbar">
-        <div class="container">
-            <div class="navbar-header header-logo"><a href="/">Bentham&#39;s Blog</a></div>
-            <div class="menu navbar-right">
-                
-                    <a class="menu-item" href="/archives">Posts</a>
-                
-                    <a class="menu-item" href="/category">Categories</a>
-                
-                    <a class="menu-item" href="/tag">Tags</a>
-                
-                    <a class="menu-item" href="/about">About</a>
-                
-                <input id="switch_default" type="checkbox" class="switch_default">
-                <label for="switch_default" class="toggleBtn"></label>
-            </div>
-        </div>
-    </nav>
-
-    
-    <nav class="navbar-mobile" id="nav-mobile">
-        <div class="container">
-            <div class="navbar-header">
-                <div>
-                    <a href="/">Bentham&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
-                </div>
-                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
-            </div>
-            <div class="menu" id="mobile-menu">
-                
-                    <a class="menu-item" href="/archives">Posts</a>
-                
-                    <a class="menu-item" href="/category">Categories</a>
-                
-                    <a class="menu-item" href="/tag">Tags</a>
-                
-                    <a class="menu-item" href="/about">About</a>
-                
-            </div>
-        </div>
-    </nav>
-
-</header>
-<script>
-    var mobileBtn = function f() {
-        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
-        var mobileMenu = document.getElementById("mobile-menu");
-        if(toggleMenu.classList.contains("active")){
-           toggleMenu.classList.remove("active")
-            mobileMenu.classList.remove("active")
-        }else{
-            toggleMenu.classList.add("active")
-            mobileMenu.classList.add("active")
-        }
-    }
-</script>
-            <div class="main">
-                <div class="container">
-    
-    
-        <div class="post-toc">
-    <div class="tocbot-list">
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
     </div>
-    <div class="tocbot-list-menu">
-        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
-        <a onclick="go_top()">Back to top</a>
-        <a onclick="go_bottom()">Go to bottom</a>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Hexo</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
     </div>
+  </div>
 </div>
 
-<script>
-    var tocbot_timer;
-    var DEPTH_MAX = 6; // 为 6 时展开所有
-    var tocbot_default_config = {
-        tocSelector: '.tocbot-list',
-        contentSelector: '.post-content',
-        headingSelector: 'h1, h2, h3, h4, h5',
-        orderedList: false,
-        scrollSmooth: true,
-        onClick: extend_click,
-    };
 
-    function extend_click() {
-        clearTimeout(tocbot_timer);
-        tocbot_timer = setTimeout(function() {
-            tocbot.refresh(obj_merge(tocbot_default_config, {
-                hasInnerContainers: true
-            }));
-        }, 420); // 这个值是由 tocbot 源码里定义的 scrollSmoothDuration 得来的
-    }
 
-    document.ready(function() {
-        tocbot.init(obj_merge(tocbot_default_config, {
-            collapseDepth: 1
-        }));
-    });
 
-    function expand_toc() {
-        var b = document.querySelector('.tocbot-toc-expand');
-        var expanded = b.getAttribute('data-expanded');
-        expanded ? b.removeAttribute('data-expanded') : b.setAttribute('data-expanded', true);
-        tocbot.refresh(obj_merge(tocbot_default_config, {
-            collapseDepth: expanded ? 1 : DEPTH_MAX
-        }));
-        b.innerText = expanded ? 'Expand all' : 'Collapse all';
-    }
 
-    function go_top() {
-        window.scrollTo(0, 0);
-    }
 
-    function go_bottom() {
-        window.scrollTo(0, document.body.scrollHeight);
-    }
 
-    function obj_merge(target, source) {
-        for (var item in source) {
-            if (source.hasOwnProperty(item)) {
-                target[item] = source[item];
-            }
-        }
-        return target;
-    }
-</script>
-    
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#AlphaStar-%E6%B5%85%E6%9E%90"><span class="nav-number">1.</span> <span class="nav-text">AlphaStar 浅析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.1.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95"><span class="nav-number">1.2.</span> <span class="nav-text">目录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-AlphaStar%E7%8E%AF%E5%A2%83%E5%A4%84%E7%90%86"><span class="nav-number">1.3.</span> <span class="nav-text">1. AlphaStar环境处理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86Starcraft%E4%B8%AD%E5%A4%8D%E6%9D%82%E7%9A%84%E8%A7%82%E5%AF%9F%E7%8A%B6%E6%80%81"><span class="nav-number">1.3.1.</span> <span class="nav-text">1.1 如何处理Starcraft中复杂的观察状态</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-1-%E8%A7%82%E5%AF%9F%E5%88%86%E7%B1%BB"><span class="nav-number">1.3.1.1.</span> <span class="nav-text">1.1.1 观察分类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-2-%E5%8A%A8%E4%BD%9C%E6%9E%84%E5%BB%BA-%E8%87%AA%E5%9B%9E%E5%BD%92%E7%9A%84%E6%9E%84%E5%BB%BA%E6%96%B9%E5%BC%8F"><span class="nav-number">1.3.1.2.</span> <span class="nav-text">1.1.2 动作构建(自回归的构建方式)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-%E5%A4%8D%E6%9D%82%E7%9A%84%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%BB%93%E6%9E%84"><span class="nav-number">1.3.2.</span> <span class="nav-text">1.2 复杂的神经网络结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-1-%E7%BD%91%E7%BB%9C%E8%BE%93%E5%87%BA-%E4%BF%A1%E6%81%AF%E7%BC%96%E7%A0%81"><span class="nav-number">1.3.2.1.</span> <span class="nav-text">1.2.1 网络输出(信息编码)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-2-%E6%A0%B8%E5%BF%83%E7%BD%91%E7%BB%9C"><span class="nav-number">1.3.2.2.</span> <span class="nav-text">1.2.2 核心网络</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-3-%E7%BD%91%E7%BB%9C%E8%BE%93%E5%87%BA"><span class="nav-number">1.3.2.3.</span> <span class="nav-text">1.2.3 网络输出</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-AlphaStar%E8%AE%AD%E7%BB%83%E6%96%B9%E6%B3%95"><span class="nav-number">1.4.</span> <span class="nav-text">2. AlphaStar训练方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E6%9C%89%E7%9B%91%E7%9D%A3%E5%AD%A6%E4%B9%A0"><span class="nav-number">1.4.1.</span> <span class="nav-text">2.1 有监督学习</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0"><span class="nav-number">1.4.2.</span> <span class="nav-text">2.2 强化学习</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E6%A8%A1%E4%BB%BF%E5%AD%A6%E4%B9%A0"><span class="nav-number">1.4.3.</span> <span class="nav-text">2.3 模仿学习</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93%E5%92%8C%E8%87%AA%E5%AD%A6%E4%B9%A0"><span class="nav-number">1.4.4.</span> <span class="nav-text">2.4 多智能体和自学习</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-1-%E8%87%AA%E5%AD%A6%E4%B9%A0"><span class="nav-number">1.4.4.1.</span> <span class="nav-text">2.4.1 自学习</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-2-%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93%EF%BC%88%E8%81%94%E7%9B%9F%E5%AD%A6%E4%B9%A0%EF%BC%89%EF%BC%88League-Training%EF%BC%89"><span class="nav-number">1.4.4.2.</span> <span class="nav-text">2.4.2 多智能体（联盟学习）（League Training）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-AlphaStar%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">1.5.</span> <span class="nav-text">3. AlphaStar实验结果</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">1.5.1.</span> <span class="nav-text">结论</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">John Doe</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
 
     
-    <article class="post-wrap">
-        <header class="post-header">
-            <h1 class="post-title">AlphaStar 浅析</h1>
-            
-                <div class="post-meta">
-                    
-                        Author: <a itemprop="author" rel="author" href="/">John Doe</a>
-                    
+  </aside>
 
-                    
-                        <span class="post-time">
-                        Date: <a href="#">August 24, 2023&nbsp;&nbsp;10:48:58</a>
-                        </span>
-                    
-                    
-                </div>
-            
-        </header>
 
-        <div class="post-content">
-            <p><img src="/./image/cover.png" alt="cover"></p>
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/08/24/AlphaStar/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="John Doe">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="AlphaStar 浅析 | Hexo">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AlphaStar 浅析
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-08-24 10:48:58" itemprop="dateCreated datePublished" datetime="2023-08-24T10:48:58+08:00">2023-08-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2023-08-25 13:13:31" itemprop="dateModified" datetime="2023-08-25T13:13:31+08:00">2023-08-25</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="/./image/cover.png" alt="cover"></p>
 <h1 id="AlphaStar-浅析"><a href="#AlphaStar-浅析" class="headerlink" title="AlphaStar 浅析"></a>AlphaStar 浅析</h1><h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>本文从alphastar项目学习以下内容：</p>
 <ul>
 <li>多源数据的融合</li>
@@ -390,69 +342,87 @@ c.价值网络输出的是一个策略在某状态下的预期收益。
 <li>价值函数:<em><strong>引入敌方观察信息巨大提升</strong></em></li>
 </ul>
 
-        </div>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
 
         
-            <section class="post-copyright">
-                
-                    <p class="copyright-item">
-                        <span>Author:</span>
-                        <span>John Doe</span>
-                    </p>
-                
-                
-                    <p class="copyright-item">
-                        <span>Permalink:</span>
-                        <span><a href="http://example.com/2023/08/24/AlphaStar/">http://example.com/2023/08/24/AlphaStar/</a></span>
-                    </p>
-                
-                
-                    <p class="copyright-item">
-                        <span>License:</span>
-                        <span>Copyright (c) 2019 <a target="_blank" rel="noopener" href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
-                    </p>
-                
-                
-                     <p class="copyright-item">
-                         <span>Slogan:</span>
-                         <span>Do you believe in <strong>DESTINY</strong>?</span>
-                     </p>
-                
 
-            </section>
-        
-        <section class="post-tags">
-            <div>
-                <span>Tag(s):</span>
-                <span class="tag">
-                    
-                </span>
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2023/08/24/test/" rel="prev" title="test">
+                  <i class="fa fa-angle-left"></i> test
+                </a>
             </div>
-            <div>
-                <a href="javascript:window.history.back();">back</a>
-                <span>· </span>
-                <a href="/">home</a>
+            <div class="post-nav-item">
             </div>
-        </section>
-        <section class="post-nav">
-            
-            
-            <a class="next" rel="next" href="/2023/08/24/test/">test</a>
-            
-        </section>
-
-
-    </article>
+          </div>
+    </footer>
+  </article>
 </div>
 
-            </div>
-            <footer id="footer" class="footer">
-    <div class="copyright">
-        <span>© John Doe | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
-    </div>
-</footer>
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">John Doe</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
 
     </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
 </body>
-
 </html>
